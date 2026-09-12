@@ -89,6 +89,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Exit after setup",
     )
+    parser.add_argument(
+        "--keep-mounted",
+        action="store_true",
+        help="Leave the sshfs mount in place on exit",
+    )
     return parser
 
 
@@ -459,24 +464,34 @@ def main() -> int:
         log_level is logging.DEBUG,
     )
 
-    logging.info("Ensuring worktree at %s for branch %s", workdir, args.branch)
-    ensure_worktree(repo_path, workdir, args.branch)
+    try:
+        logging.info("Ensuring worktree at %s for branch %s", workdir, args.branch)
+        ensure_worktree(repo_path, workdir, args.branch)
 
-    if args.pristine:
-        logging.info("Resetting worktree to pristine state")
-        pristine_worktree(workdir)
+        if args.pristine:
+            logging.info("Resetting worktree to pristine state")
+            pristine_worktree(workdir)
 
-    if args.early_exit:
-        logging.info("Exiting early as requested")
-        return os.EX_OK
+        if args.early_exit:
+            logging.info("Exiting early as requested")
+            return os.EX_OK
 
-    logging.info("Launching remote opencode on %s@%s", args.user, args.host)
-    return launch_remote_opencode(
-        args.host,
-        args.user,
-        args.remote_opencode_exec,
-        remote_workdir,
-    )
+        logging.info("Launching remote opencode on %s@%s", args.user, args.host)
+        return launch_remote_opencode(
+            args.host,
+            args.user,
+            args.remote_opencode_exec,
+            remote_workdir,
+        )
+    finally:
+        if args.keep_mounted:
+            logging.warning("Leaving %s mounted, as requested", workdir)
+        else:
+            logging.info("Unmounting %s", workdir)
+            try:
+                umount_if_present(workdir)
+            except AppError as exc:
+                logging.warning("Cleanup when you are done: %s", workdir, exc)
 
 
 def safe_main() -> None:
