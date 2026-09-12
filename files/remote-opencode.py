@@ -46,7 +46,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Sandbox hostname",
     )
     parser.add_argument(
-        "repo_path",
+        "--repo-path",
+        default=".",
         help="Path to a git repository",
     )
     parser.add_argument(
