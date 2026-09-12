@@ -1,0 +1,11 @@
+---
+# Purpose: bring the instance to the desired state by running the role under test.
+# Molecule calls this playbook with `molecule converge`.
+- name: Converge
+  hosts: opencode
+  gather_facts: true # Disable if your role does not rely on facts
+  tasks:
+    - name: Apply role under test
+      ansible.builtin.import_role:
+        # make the name generic so that's one less thing to fix after copy/pasting
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"

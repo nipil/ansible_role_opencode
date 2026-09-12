@@ -1,0 +1,58 @@
+---
+- name: Validate configuration
+  ansible.builtin.import_tasks:
+    file: validate.yml
+
+- name: Setup user
+  ansible.builtin.import_tasks:
+    file: user.yml
+
+- name: Setup auxiliary packages
+  ansible.builtin.apt:
+    name: "{{ opencode_additional_packages }}"
+    state: present
+
+# git instaweb starts unprivileged on port 1234
+# with a generated configuration for the repo dir
+- name: Stop and disable default lighttpd
+  ansible.builtin.systemd_service:
+    name: lighttpd
+    state: stopped
+    enabled: false
+    masked: true
+
+- name: Setup working repository
+  tags: repo
+  become: true
+  become_user: "{{ opencode_user }}"
+  ansible.builtin.import_tasks:
+    file: repository.yml
+
+- name: Setup working repository
+  tags: webui
+  become: true
+  ansible.builtin.import_tasks:
+    file: git-webui.yml
+
+- name: Check opencode version
+  changed_when: false
+  failed_when: false
+  register: opencode_version_check
+  ansible.builtin.command:
+    argv:
+      - opencode
+      - --version
+
+- name: Install opencode on target
+  when:
+    - opencode_version_check.rc != 0
+      or opencode_version not in opencode_version_check.stdout_lines
+  ansible.builtin.import_tasks:
+    file: install.yml
+
+- name: Configure opencode
+  tags: config
+  become: true
+  become_user: "{{ opencode_user }}"
+  ansible.builtin.import_tasks:
+    file: configure.yml

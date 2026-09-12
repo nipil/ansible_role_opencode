@@ -1,0 +1,26 @@
+---
+opencode_version: 1.18.25
+opencode_archive_sha256: ccd10586611b598b1eaed7c05cfbcbc68e3ec09e736b360da09b1d615d922968
+
+opencode_home: /opt/opencode
+opencode_user_authorized_keys: []
+
+opencode_shell: /bin/bash
+# https://codeberg.org/dnkl/foot/issues/2335
+# for versions of foot until 1.27 foot crashes on opencode
+# so "protect" the terminal by running inside a tmux
+# opencode_shell: /usr/bin/tmux
+
+# https://opencode.ai/docs/providers/#credentials
+opencode_auth:
+# provider_name:
+#   type:
+#   ...
+
+opencode_model:
+  # recent:
+  #   - providerID: openai
+  #     modelID: gpt-5.3-codex
+  # favorite: []
+  # variant:
+  #   openai/gpt-5.3-codex: default

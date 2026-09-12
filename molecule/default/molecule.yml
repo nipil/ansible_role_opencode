@@ -1,0 +1,65 @@
+---
+# Dependency management (download roles/collections)
+dependency:
+  name: galaxy
+  options:
+    ### install with `molecule dependency` if manually needed
+    # force: true
+    ignore-certs: false
+    ignore-errors: false
+    # path are relative to project (role) root
+    role-file: molecule/requirements-roles.yml
+    requirements-file: molecule/requirements-collections.yml
+
+ansible:
+  cfg:
+    defaults:
+      host_key_checking: false
+      verbosity: 1
+      # IMPORTANT : this is a comma-separated value, not a list !
+      # by the way, repeating the default is required, list is not merged
+      vars_plugins_enabled: host_group_vars
+    ssh_connection:
+      pipelining: true
+  env:
+    ANSIBLE_FORCE_COLOR: "1"
+    ANSIBLE_LOAD_CALLBACK_PLUGINS: "1"
+    # MOLECULE_PROJECT_DIRECTORY is the folder where `molecule` dir is
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
+
+  executor:
+    backend: ansible-playbook
+    args:
+      ansible_playbook:
+        - --diff
+        - --force-handlers
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/inventory/
+      ansible_navigator:
+        - --mode stdout
+        - --pull-policy missing
+        - --execution-environment-image ghcr.io/ansible/community-ansible-dev-tools:latest
+
+  playbooks:
+    create: create.yml
+    converge: converge.yml
+    destroy: destroy.yml
+    cleanup: cleanup.yml
+    prepare: prepare.yml
+    side_effect: side_effect.yml
+    verify: verify.yml
+
+scenario:
+  name: default
+  test_sequence:
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - side_effect
+    - verify
+    - cleanup
+    - destroy

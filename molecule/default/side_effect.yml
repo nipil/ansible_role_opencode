@@ -1,0 +1,8 @@
+---
+# deliberately alter the environment after convergence, typically to simulate external events
+# useful when you want to test recovery, or behavior after an external mutation.
+- name: Side-effect
+  hosts: opencode
+  gather_facts: false # Quicker, if you do not need facts
+
+  tasks: []

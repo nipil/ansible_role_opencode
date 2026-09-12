@@ -1,0 +1,36 @@
+- name: Setup git folder for repositories
+  ansible.builtin.file:
+    path: "{{ opencode_git_repo }}"
+    state: directory
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+    mode: "0755"
+
+- name: Initialize git folder
+  changed_when: true # i can't be bothered
+  ansible.builtin.command:
+    chdir: "{{ opencode_git_repo }}"
+    argv:
+      - git
+      - init
+      - .
+
+- name: Configure git user
+  changed_when: true # i can't be bothered
+  ansible.builtin.command:
+    chdir: "{{ opencode_git_repo }}"
+    argv:
+      - git
+      - config
+      - user.name
+      - "{{ opencode_user }}"
+
+- name: Configure git email
+  changed_when: true # i can't be bothered
+  ansible.builtin.command:
+    chdir: "{{ opencode_git_repo }}"
+    argv:
+      - git
+      - config
+      - user.email
+      - "{{ opencode_user }}@{{ inventory_hostname }}"

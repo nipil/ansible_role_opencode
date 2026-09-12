@@ -1,0 +1,8 @@
+opencode_user_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINSr7PTP2QL4MBg3eMzxiLbLYF7CcfGXk7YwOllYZ5TU dummy
+
+opencode_auth:
+  foo:
+
+opencode_model:
+  baz:

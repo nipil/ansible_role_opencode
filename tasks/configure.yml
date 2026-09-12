@@ -1,0 +1,26 @@
+- name: Setup local share directory
+  loop:
+    - "{{ opencode_path_local_share }}"
+    - "{{ opencode_path_local_state }}"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: "755"
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+    state: directory
+
+- name: Setup credentials
+  ansible.builtin.copy:
+    content: "{{ opencode_auth }}"
+    dest: "{{ opencode_auth_file }}"
+    mode: "0600"
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+
+- name: Setup model
+  ansible.builtin.copy:
+    content: "{{ opencode_model }}"
+    dest: "{{ opencode_model_file }}"
+    mode: "0644"
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"

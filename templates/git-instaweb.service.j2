@@ -1,0 +1,25 @@
+[Unit]
+Description=git instaweb for ~{{ opencode_user }}/git
+After=network.target
+
+[Service]
+Type=forking
+
+# running it as the opencode user might be a security issue
+# for browser injection to the user, depending on your requirements
+User={{ opencode_user }}
+Group={{ opencode_user }}
+
+# the wrapper wants to write the pid into the .git repository anyway
+# which would make it difficult to run the webui as a separate user
+PIDFile={{ opencode_git_repo }}/.git/pid
+
+# webui is readonly
+WorkingDirectory={{ opencode_git_repo }}
+
+ExecStart=/usr/bin/git instaweb --httpd=lighttpd --port=1234 --start
+ExecStop=/usr/bin/git instaweb --stop
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

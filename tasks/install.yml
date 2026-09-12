@@ -1,0 +1,38 @@
+---
+- name: Create extraction directory
+  register: opencode_tmp_folder
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: opencode
+    suffix: extraction
+
+- name: Download OpenCode archive
+  ansible.builtin.get_url:
+    url: "{{ opencode_archive_url }}"
+    dest: "{{ opencode_tmp_folder.path }}/{{ opencode_archive }}"
+    checksum: "sha256:{{ opencode_archive_sha256 }}"
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+    mode: "0644"
+
+- name: Extract OpenCode archive
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ opencode_tmp_folder.path }}/{{ opencode_archive }}"
+    dest: "{{ opencode_tmp_folder.path }}/"
+    owner: "{{ opencode_user }}"
+    group: "{{ opencode_user }}"
+
+- name: Install binary
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ opencode_tmp_folder.path }}/opencode"
+    dest: "{{ opencode_install_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Remove temporary artefacts
+  ansible.builtin.file:
+    path: "{{ opencode_tmp_folder.path }}"
+    state: absent

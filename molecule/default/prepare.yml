@@ -1,0 +1,11 @@
+---
+- name: Prepare
+  hosts: opencode
+  gather_facts: false
+
+  pre_tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        update_cache: true
+        name: openssh-server
+        state: present

@@ -1,0 +1,18 @@
+---
+opencode_user: opencode
+
+opencode_archive: opencode-linux-x64-baseline.tar.gz
+opencode_archive_url: https://github.com/anomalyco/opencode/releases/download/v{{ opencode_version }}/{{ opencode_archive }}
+opencode_install_path: /usr/local/bin/opencode
+
+opencode_path_local_share: ~/.local/share/opencode
+opencode_auth_file: "{{ opencode_path_local_share }}/auth.json"
+opencode_path_local_state: ~/.local/state/opencode
+opencode_model_file: "{{ opencode_path_local_state }}/model.json"
+
+opencode_additional_packages:
+  - git
+  - gitweb
+  - lighttpd # for git instaweb
+opencode_git_repo: "{{ opencode_home }}/git"
+opencode_git_instaweb_service: /etc/systemd/system/git-instaweb.service

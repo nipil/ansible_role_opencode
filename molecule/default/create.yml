@@ -1,0 +1,22 @@
+---
+- name: Create test container
+  hosts: localhost
+  gather_facts: false
+  # no_log: "{{ molecule_no_log }}"
+
+  ### SYSTEMD ENABLED IMAGES
+  # https://github.com/marciopaiva/molecule-systemd-images
+  # https://github.com/trfore/docker-debian13-systemd
+
+  tasks:
+    - name: Start Debian 13 container
+      containers.podman.podman_container:
+        name: molecule-debian13
+        image: docker.io/mpaivabarbosa/molecule-systemd-debian:13
+        # init: true # does not work with it
+        state: started
+        systemd: true
+        privileged: true
+        pull: newer
+        volumes: # does not work without
+          - /sys/fs/cgroup:/sys/fs/cgroup:ro

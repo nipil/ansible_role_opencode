@@ -1,0 +1,14 @@
+- name: Setup git instaweb systemd template
+  ansible.builtin.template:
+    src: "{{ opencode_git_instaweb_service | basename }}.j2"
+    dest: "{{ opencode_git_instaweb_service }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure git webui is running
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    name: "{{ opencode_git_instaweb_service | basename }}"
+    state: restarted
+    enabled: true
