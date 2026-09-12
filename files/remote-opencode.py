@@ -24,8 +24,24 @@ DEFAULT_SSHFS_OPTIONS: tuple[str, ...] = (
     "idmap=user",
 )
 
+CMD_FINDMNT = "findmnt"
 CMD_GIT = "git"
 CMD_SSH = "ssh"
+CMD_SSHFS = "sshfs"
+CMD_UMOUNT = "umount"
+
+REQUIRED_TOOLS: tuple[str, ...] = (
+    CMD_FINDMNT,
+    CMD_GIT,
+    CMD_SSH,
+    CMD_SSHFS,
+    CMD_UMOUNT,
+)
+
+REMOTE_REQUIRED_TOOLS: tuple[str, ...] = (
+    "mkdir",
+    "rm",
+)
 
 
 class AppError(Exception):
@@ -149,6 +165,40 @@ def run_unchecked(
         raise AppError(message) from None
 
 
+def verify_required_tools() -> None:
+    missing = [tool for tool in REQUIRED_TOOLS if shutil.which(tool) is None]
+    if missing:
+        raise AppError("required tools not found: " + ", ".join(missing))
+
+
+def verify_remote_required_tools(
+    host: str,
+    user: str,
+    remote_opencode_exec: str,
+) -> None:
+    tools = list(dict.fromkeys([*REMOTE_REQUIRED_TOOLS, remote_opencode_exec]))
+    missing = []
+    for tool in tools:
+        result = run_unchecked(
+            [
+                CMD_SSH,
+                "-l",
+                user,
+                host,
+                "command",
+                "-v",
+                shlex.quote(tool),
+            ],
+            err_ctx=f"failed to check remote tool {tool}",
+        )
+        if result.returncode != 0:
+            missing.append(tool)
+    if missing:
+        raise AppError(
+            f"required remote tools not found on {user}@{host}: " + ", ".join(missing)
+        )
+
+
 def validate_repo(
     repo_path: Path,
 ) -> None:
@@ -197,7 +247,7 @@ def umount_if_present(
     path: Path,
 ) -> None:
     result = run_unchecked(
-        ["umount", str(path)],
+        [CMD_UMOUNT, str(path)],
         err_ctx=f"failed to unmount {path}",
     )
     if result.returncode == 0:
@@ -251,7 +301,7 @@ def remote_prepare(
 def current_mount_source(path: Path) -> str | None:
     result = run_unchecked(
         [
-            "findmnt",
+            CMD_FINDMNT,
             "--noheadings",
             "--raw",
             "-o",
@@ -275,7 +325,7 @@ def mount_sshfs(
 ) -> None:
     target = f"{user}@{host}:{remote_workdir}"
     command: list[str] = [
-        "sshfs",
+        CMD_SSHFS,
         target,
         str(local_mount),
     ]
@@ -444,6 +494,9 @@ def main() -> int:
         format="[%(levelname)s] %(message)s",
         datefmt="%H:%M:%S",
     )
+
+    verify_required_tools()
+    verify_remote_required_tools(args.host, args.user, args.remote_opencode_exec)
 
     repo_path = Path(args.repo_path).expanduser().resolve()
     validate_repo(repo_path)
