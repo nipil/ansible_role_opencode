@@ -204,18 +204,14 @@ def umount_if_present(
     raise AppError(f"umount failed for {path}: {(result.stderr or '').strip()}")
 
 
-def remote_workdir_path(
-    workdir: Path,
-) -> str:
-    return shlex.quote(workdir.name)
-
-
 def remote_prepare(
     host: str,
     user: str,
     remote_workdir: str,
     pristine: bool,
 ) -> None:
+    # remote path reaches a shell, so it must be quoted there
+    remote_workdir_arg = shlex.quote(remote_workdir)
     if pristine:
         run_checked(
             [
@@ -373,6 +369,8 @@ def pristine_worktree(workdir: Path) -> None:
 def launch_remote_opencode(
     host: str, user: str, remote_exec: str, remote_workdir: str
 ) -> int:
+    # remote path reaches a shell, so it must be quoted there
+    remote_workdir_arg = shlex.quote(remote_workdir)
     result = run_unchecked(
         [
             CMD_SSH,
@@ -382,7 +380,7 @@ def launch_remote_opencode(
             user,
             host,
             remote_exec,
-            remote_workdir,
+            remote_workdir_arg,
         ],
         # remote TUI requires terminal pass-through
         capture_output=False,
@@ -417,7 +415,7 @@ def main() -> int:
     ensure_branch(repo_path, args.branch, args.branch_ref)
 
     workdir = local_workdir(repo_path, args.branch)
-    remote_workdir = remote_workdir_path(workdir)
+    remote_workdir = workdir.name
     sshfs_options = resolve_sshfs_options(args.sshfs)
     logging.info("Resolved workdir=%s remote_workdir=%s", workdir, remote_workdir)
 
