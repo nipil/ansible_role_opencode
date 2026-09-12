@@ -56,3 +56,14 @@
   become_user: "{{ opencode_user }}"
   ansible.builtin.import_tasks:
     file: configure.yml
+
+- name: Install helper on controller
+  when: opencode_helper_install | bool
+  run_once: "{{ opencode_helper_install_on_controller }}"
+  delegate_to: "{{ opencode_helper_install_on_controller | ternary('localhost', inventory_hostname) }}"
+  ansible.builtin.copy:
+    src: "{{ opencode_helper_name }}"
+    dest: "{{ opencode_helper_install_folder }}/"
+    owner: root
+    group: root
+    mode: "0755"

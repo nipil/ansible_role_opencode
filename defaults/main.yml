@@ -5,6 +5,10 @@ opencode_archive_sha256: ccd10586611b598b1eaed7c05cfbcbc68e3ec09e736b360da09b1d6
 opencode_home: /opt/opencode
 opencode_user_authorized_keys: []
 
+# wether to install the helper script or not, and where to install it
+opencode_helper_install: false
+opencode_helper_install_on_controller: true
+
 opencode_shell: /bin/bash
 # https://codeberg.org/dnkl/foot/issues/2335
 # for versions of foot until 1.27 foot crashes on opencode
