@@ -1,3 +1,6 @@
 # roles required by molecule scenarios
 ---
-[]
+- name: user_ssh
+  src: https://github.com/nipil/ansible_role_user_ssh.git
+  scm: git
+  version: v1.0.0

@@ -7,5 +7,5 @@
   tasks:
     - name: Apply role under test
       ansible.builtin.import_role:
-        # make the name generic so that's one less thing to fix after copy/pasting
-        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+        # roles can be invoked by name or by path
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}"
