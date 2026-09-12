@@ -63,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--log-level",
         choices=["debug", "info", "warning", "error", "fatal"],
-        default="info",
+        default="warning",
     )
     parser.add_argument(
         "--user",
@@ -248,6 +248,23 @@ def remote_prepare(
     )
 
 
+def current_mount_source(path: Path) -> str | None:
+    result = run_unchecked(
+        [
+            "findmnt",
+            "--noheadings",
+            "--raw",
+            "-o",
+            "SOURCE",
+            str(path),
+        ],
+    )
+    if result.returncode != 0:
+        return None
+    source = (result.stdout or "").strip()
+    return source or None
+
+
 def mount_sshfs(
     host: str,
     user: str,
@@ -266,10 +283,25 @@ def mount_sshfs(
         command.extend(["-o", option])
     if debug:
         command.append("--debug")
-    run_checked(
+    result = run_unchecked(
         command,
         err_ctx=f"failed to mount sshfs from {target} at {local_mount}",
     )
+    if result.returncode == 0:
+        return
+    # sshfs fails when the mountpoint is already mounted
+    # (for example leftover from a previous run).
+    # Reuse if it is the same, or error if source differs
+    if current_mount_source(local_mount) == target:
+        logging.info(
+            "Mount %s -> %s already present; reusing the existing mount",
+            target,
+            local_mount,
+        )
+        return
+    stderr = (result.stderr or "").strip()
+    details = f": {stderr}" if stderr else ""
+    raise AppError(f"failed to mount sshfs from {target} at {local_mount}{details}")
 
 
 def branch_exists(repo_path: Path, branch: str) -> bool:
@@ -425,12 +457,6 @@ def main() -> int:
     sshfs_options = resolve_sshfs_options(args.sshfs)
     logging.info("Resolved workdir=%s remote_workdir=%s", workdir, remote_workdir)
 
-    logging.info("Unmounting existing mount at %s (if present)", workdir)
-    umount_if_present(workdir)
-
-    logging.info("Removing existing path %s (if present)", workdir)
-    remove_path_if_exists(workdir)
-
     logging.info(
         "Preparing remote workdir %s on %s@%s (pristine=%s)",
         remote_workdir,
@@ -492,7 +518,7 @@ def main() -> int:
             try:
                 umount_if_present(workdir)
             except AppError as exc:
-                logging.warning("Cleanup when you are done: %s", workdir, exc)
+                logging.warning("Cleanup %s when you are done: %s", workdir, exc)
 
 
 def safe_main() -> None:
