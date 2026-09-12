@@ -11,18 +11,21 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-DEFAULT_REMOTE_OPENCODE_EXEC: str = "opencode"
-DEFAULT_USER: str = "opencode"
-DEFAULT_BRANCH_REF: str = "HEAD"
+SSH_ALIVE_INTERVAL = 10
+SSH_ALIVE_COUNT_MAX = 3
+
+DEFAULT_REMOTE_OPENCODE_EXEC = "opencode"
+DEFAULT_USER = "opencode"
+DEFAULT_BRANCH_REF = "HEAD"
 DEFAULT_SSHFS_OPTIONS: tuple[str, ...] = (
     "reconnect",
-    "ServerAliveInterval=10",
-    "ServerAliveCountMax=3",
+    f"ServerAliveInterval={SSH_ALIVE_INTERVAL}",
+    f"ServerAliveCountMax={SSH_ALIVE_COUNT_MAX}",
     "idmap=user",
 )
 
-CMD_GIT: str = "git"
-CMD_SSH: str = "ssh"
+CMD_GIT = "git"
+CMD_SSH = "ssh"
 
 
 class AppError(Exception):
@@ -71,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=None,
         metavar="OPT",
-        help="sshfs -o option (repeatable)",
+        help="sshfs -o option (repeatable), appended to the defaults",
     )
     parser.add_argument(
         "--remote-opencode-exec",
@@ -389,9 +392,10 @@ def launch_remote_opencode(
 
 
 def resolve_sshfs_options(values: Sequence[str] | None) -> list[str]:
+    options = list(DEFAULT_SSHFS_OPTIONS)
     if values is not None:
-        return list(values)
-    return list(DEFAULT_SSHFS_OPTIONS)
+        options.extend(values)
+    return options
 
 
 def main() -> int:
@@ -438,7 +442,11 @@ def main() -> int:
         raise AppError(f"failed to create mount directory {workdir}: {exc}") from None
 
     logging.info(
-        "Mounting sshfs %s@%s:%s -> %s", args.user, args.host, remote_workdir, workdir
+        "Mounting sshfs %s@%s:%s -> %s",
+        args.user,
+        args.host,
+        remote_workdir,
+        workdir,
     )
 
     mount_sshfs(
