@@ -9,3 +9,6 @@
         update_cache: true
         name: openssh-server
         state: present
+
+- name: Import cleanup playbook for actions on localhost
+  ansible.builtin.import_playbook: cleanup.yml

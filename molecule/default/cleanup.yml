@@ -1,3 +1,9 @@
 ---
 - name: Cleanup
   hosts: localhost
+
+  tasks:
+    - name: Remove artefact on localhost before testing
+      ansible.builtin.file:
+        path: /tmp/remote-opencode.py
+        state: absent

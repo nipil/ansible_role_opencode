@@ -6,3 +6,20 @@
   gather_facts: false # Quicker, if you do not need facts
 
   tasks: []
+
+- name: Verify helper script was copied on localhost
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Check helper file on localhost
+      ansible.builtin.stat:
+        path: /tmp/remote-opencode.py
+      register: opencode_helper_stat
+
+    - name: Assert helper file has been copied
+      ansible.builtin.assert:
+        that:
+          - opencode_helper_stat.stat.exists
+          - opencode_helper_stat.stat.isreg
+        fail_msg: Helper script is not present on localhost

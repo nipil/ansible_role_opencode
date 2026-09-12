@@ -6,3 +6,7 @@ opencode_auth:
 
 opencode_model:
   baz:
+
+opencode_helper_install: true
+opencode_helper_install_folder: /tmp
+opencode_helper_install_on_controller: true
