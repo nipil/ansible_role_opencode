@@ -413,6 +413,9 @@ def main() -> int:
     validate_repo(repo_path)
     logging.info("Validated local repo at %s", repo_path)
 
+    logging.info("Ensuring branch %s (ref=%s)", args.branch, args.branch_ref)
+    ensure_branch(repo_path, args.branch, args.branch_ref)
+
     workdir = local_workdir(repo_path, args.branch)
     remote_workdir = remote_workdir_path(workdir)
     sshfs_options = resolve_sshfs_options(args.sshfs)
@@ -457,9 +460,6 @@ def main() -> int:
         sshfs_options,
         log_level is logging.DEBUG,
     )
-
-    logging.info("Ensuring branch %s (ref=%s)", args.branch, args.branch_ref)
-    ensure_branch(repo_path, args.branch, args.branch_ref)
 
     logging.info("Ensuring worktree at %s for branch %s", workdir, args.branch)
     ensure_worktree(repo_path, workdir, args.branch)
