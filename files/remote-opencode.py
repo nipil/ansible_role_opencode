@@ -92,20 +92,30 @@ def build_parser() -> argparse.ArgumentParser:
 def run_checked(
     command: Sequence[str],
     *,
+    err_ctx: str | None = None,
     capture_output: bool = True,
     cwd: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    result = run_unchecked(command, cwd=cwd, capture_output=capture_output)
+    result = run_unchecked(
+        command,
+        capture_output=capture_output,
+        err_ctx=err_ctx,
+        cwd=cwd,
+    )
     if result.returncode == 0:
         return result
     stderr = (result.stderr or "").strip()
     details = f": {stderr}" if stderr else ""
-    raise AppError(f"command failed ({' '.join(command)}){details}")
+    message = f"command failed ({shlex.join(command)}){details}"
+    if err_ctx is not None:
+        message = f"{err_ctx}: {message}"
+    raise AppError(message)
 
 
 def run_unchecked(
     command: Sequence[str],
     *,
+    err_ctx: str | None = None,
     capture_output: bool = True,
     cwd: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
@@ -124,7 +134,10 @@ def run_unchecked(
             capture_output=capture_output,
         )
     except FileNotFoundError:
-        raise AppError(f"command not found: {command[0]}") from None
+        message = f"command not found: {command[0]}"
+        if err_ctx is not None:
+            message = f"{err_ctx}: {message}"
+        raise AppError(message) from None
 
 
 def validate_repo(
@@ -141,7 +154,8 @@ def validate_repo(
             str(repo_path),
             "rev-parse",
             "--git-dir",
-        ]
+        ],
+        err_ctx=f"failed to validate repository at {repo_path}",
     )
 
 
@@ -173,7 +187,10 @@ def remove_path_if_exists(
 def umount_if_present(
     path: Path,
 ) -> None:
-    result = run_unchecked(["umount", str(path)])
+    result = run_unchecked(
+        ["umount", str(path)],
+        err_ctx=f"failed to unmount {path}",
+    )
     if result.returncode == 0:
         return
     stderr_lc = (result.stderr or "").strip().lower()
@@ -206,8 +223,11 @@ def remote_prepare(
                 "rm",
                 "-r",
                 "-f",
-                remote_workdir,
-            ]
+                remote_workdir_arg,
+            ],
+            err_ctx=(
+                f"failed to remove remote workdir {remote_workdir} on {user}@{host}"
+            ),
         )
     run_checked(
         [
@@ -217,8 +237,9 @@ def remote_prepare(
             host,
             "mkdir",
             "-p",
-            remote_workdir,
-        ]
+            remote_workdir_arg,
+        ],
+        err_ctx=(f"failed to create remote workdir {remote_workdir} on {user}@{host}"),
     )
 
 
@@ -240,7 +261,10 @@ def mount_sshfs(
         command.extend(["-o", option])
     if debug:
         command.append("--debug")
-    run_checked(command)
+    run_checked(
+        command,
+        err_ctx=f"failed to mount sshfs from {target} at {local_mount}",
+    )
 
 
 def branch_exists(repo_path: Path, branch: str) -> bool:
@@ -253,7 +277,8 @@ def branch_exists(repo_path: Path, branch: str) -> bool:
             "--verify",
             "--quiet",
             f"refs/heads/{branch}",
-        ]
+        ],
+        err_ctx=f"failed to check branch {branch} in {repo_path}",
     )
     return result.returncode == 0
 
@@ -261,7 +286,10 @@ def branch_exists(repo_path: Path, branch: str) -> bool:
 def ensure_branch(repo_path: Path, branch: str, branch_ref: str) -> None:
     if branch_exists(repo_path, branch):
         return
-    run_checked([CMD_GIT, "-C", str(repo_path), "branch", branch, branch_ref])
+    run_checked(
+        [CMD_GIT, "-C", str(repo_path), "branch", branch, branch_ref],
+        err_ctx=f"failed to create branch {branch} from {branch_ref}",
+    )
 
 
 def listed_worktrees(repo_path: Path) -> set[Path]:
@@ -273,7 +301,8 @@ def listed_worktrees(repo_path: Path) -> set[Path]:
             "worktree",
             "list",
             "--porcelain",
-        ]
+        ],
+        err_ctx=f"failed to list worktrees of {repo_path}",
     )
     items: set[Path] = set()
     for line in result.stdout.splitlines():
@@ -289,7 +318,7 @@ def ensure_worktree(repo_path: Path, workdir: Path, branch: str) -> None:
     registered = listed_worktrees(repo_path)
     resolved_workdir = workdir.resolve()
     if resolved_workdir not in registered:
-        run_unchecked(
+        run_checked(
             [
                 CMD_GIT,
                 "-C",
@@ -298,10 +327,11 @@ def ensure_worktree(repo_path: Path, workdir: Path, branch: str) -> None:
                 "add",
                 str(workdir),
                 branch,
-            ]
+            ],
+            err_ctx=f"failed to add worktree {workdir} for branch {branch}",
         )
         return
-    run_unchecked(
+    run_checked(
         [
             CMD_GIT,
             "-C",
@@ -309,7 +339,8 @@ def ensure_worktree(repo_path: Path, workdir: Path, branch: str) -> None:
             "worktree",
             "repair",
             str(workdir),
-        ]
+        ],
+        err_ctx=f"failed to repair worktree {workdir}",
     )
 
 
@@ -321,7 +352,8 @@ def pristine_worktree(workdir: Path) -> None:
             str(workdir),
             "reset",
             "--hard",
-        ]
+        ],
+        err_ctx=f"failed to reset worktree {workdir} to HEAD",
     )
     run_checked(
         [
@@ -330,7 +362,8 @@ def pristine_worktree(workdir: Path) -> None:
             str(workdir),
             "clean",
             "-dxf",
-        ]
+        ],
+        err_ctx=f"failed to clean untracked files in worktree {workdir}",
     )
 
 
@@ -350,6 +383,7 @@ def launch_remote_opencode(
         ],
         # remote TUI requires terminal pass-through
         capture_output=False,
+        err_ctx=f"failed to launch remote opencode on {user}@{host}",
     )
     return result.returncode
 
@@ -444,7 +478,7 @@ def safe_main() -> None:
     try:
         exit_code = main()
     except AppError as exc:
-        logging.error(f"{exc}")
+        logging.error("%s", exc)
     finally:
         sys.stdout.flush()
         sys.stderr.flush()
