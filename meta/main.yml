@@ -18,4 +18,6 @@ galaxy_info:
   galaxy_tags:
     - opencode
     - gitweb
-dependencies: []
+dependencies:
+  - src: https://github.com/nipil/ansible_role_user_ssh.git
+    version: v1.0.0
