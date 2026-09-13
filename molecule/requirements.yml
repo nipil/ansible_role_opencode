@@ -4,8 +4,24 @@ collections:
   # depenency of user_ssh
   - name: ansible.posix
 
+# IMPORTANT: role names should match url basename :
+#
+# Even though molecule/default/roles/user_ssh is present,
+# example that produces the error below
+# - name: user_ssh
+#   src: https://github.com/nipil/ansible-role-user-ssh.git
+#
+# [ERROR]: The role 'ansible-role-user-ssh' was not found in:
+# │   ansible.legacy:/home/my_user/git/ansible_role_opencode.helper_script/molecule/default/roles:/h
+# │   ome/my_user/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:/home/my_user/git:/home
+# │   /my_user/git/ansible_role_opencode.helper_script/molecule/default
+# │ Origin: /home/my_user/git/ansible_role_opencode.helper_script/meta/main.yml:22:5
+# │
+# │ 21 dependencies:
+# │ 22   - src: https://github.com/nipil/ansible-role-user-ssh.git
+
 roles:
-  - name: user_ssh
+  - name: ansible-role-user-ssh
     src: https://github.com/nipil/ansible-role-user-ssh.git
     scm: git
     version: v1.2.0
