@@ -11,7 +11,8 @@ creates a dedicated `opencode` login user + SSH access, an empty git repo at
   - Final task copies `files/remote-opencode.py` to `{{ opencode_helper_install_folder }}` only when `opencode_helper_install` (default `false`); with `opencode_helper_install_on_controller` (default `true`) it delegates to `localhost` with `run_once`.
 - `defaults/main.yml` — user-facing vars, incl. version pin
 - `vars/main.yml` — computed paths / archive URL (overridable). Archive name is hardcoded to the x64 baseline tarball.
-- `meta/main.yml` — role metadata: Debian bookworm/trixie, Ubuntu jammy/noble, Ansible >= 2.14; declares the `user_ssh` dependency
+- `meta/main.yml` — role metadata: Debian bookworm/trixie, Ubuntu jammy/noble, Ansible >= 2.14 (no role dependencies)
+- `requirements.yml` — consumer-facing runtime dependencies (`user_ssh` role + `ansible.posix` collection)
 - `files/remote-opencode.py` — installed by the role (see above) on the controller: sshfs-mounts a git worktree and launches remote opencode over SSH. Requires local `git`, `ssh`, `findmnt`, `sshfs`, `umount` — declared as `CMD_*` constants in a `REQUIRED_TOOLS` tuple at the top of the file. Remote tools `mkdir`, `rm`, and the `opencode` binary (from `REMOTE_REQUIRED_TOOLS` + `--remote-opencode-exec`) are checked over SSH. `verify_required_tools()` (local) and `verify_remote_required_tools()` (remote, called at the start of `main`) each collect and report all missing tools at once.
 - `molecule/default/` — Podman scenario (Debian 13 systemd container)
 
@@ -26,6 +27,6 @@ creates a dedicated `opencode` login user + SSH access, an empty git repo at
 
 - Bumping OpenCode requires updating BOTH `opencode_version` AND `opencode_archive_sha256` in `defaults/main.yml`; the install task's `get_url` enforces the checksum.
 - The role stops, disables, and **masks** the system-wide `lighttpd` service, since git instaweb runs its own lighttpd on port 1234.
-- `tasks/user.yml` ends with `import_role: name: user_ssh`. The role is fetched from `github.com/nipil/ansible_role_user_ssh` v1.0.0 (declared in both `meta/main.yml` dependencies and `molecule/requirements-roles.yml`), but nothing bundles it in-repo — it must exist under exactly the name `user_ssh` in `ANSIBLE_ROLES_PATH` (`molecule dependency` sets this up for the scenario).
+- `tasks/user.yml` ends with `include_role: name: user_ssh`. The role is fetched from `github.com/nipil/ansible-role-user-ssh` v1.2.0 (declared in `requirements.yml` and `molecule/requirements.yml`). It is **not** auto-installed (no `meta/main.yml` dependency — Galaxy deps run before the role's own tasks, but `user_ssh` must run *after* the user exists), so consumers must `ansible-galaxy install -r requirements.yml`; it must exist under exactly the name `user_ssh` in `ANSIBLE_ROLES_PATH` (`molecule dependency` sets this up for the scenario).
 - `configure.yml` always rewrites the opencode user's `auth.json` and `model.json` from `opencode_auth` / `opencode_model` (both asserted as mappings in `validate.yml`) — the defaults are empty `{}`, so an unset var clobbers existing credentials.
 - `opencode_shell` defaults to `/bin/bash`; tmux (`/usr/bin/tmux`) is the workaround for a foot terminal crash bug, and then a `.tmux.conf` forces `/bin/bash` as the default shell.
