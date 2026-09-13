@@ -58,6 +58,7 @@
     file: configure.yml
 
 - name: Install helper on controller
+  become: true
   when: opencode_helper_install | bool
   run_once: "{{ opencode_helper_install_on_controller }}"
   delegate_to: "{{ opencode_helper_install_on_controller | ternary('localhost', inventory_hostname) }}"

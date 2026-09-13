@@ -17,6 +17,4 @@ opencode_additional_packages:
 opencode_git_repo: "{{ opencode_home }}/git"
 opencode_git_instaweb_service: /etc/systemd/system/git-instaweb.service
 
-# where to install the helper script, and its name
-opencode_helper_install_folder: /usr/local/bin
 opencode_helper_name: remote-opencode.py
