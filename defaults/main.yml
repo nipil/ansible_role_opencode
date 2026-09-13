@@ -1,6 +1,6 @@
 ---
-opencode_version: 1.18.25
-opencode_archive_sha256: ccd10586611b598b1eaed7c05cfbcbc68e3ec09e736b360da09b1d615d922968
+opencode_version: 1.18.30
+opencode_archive_sha256: 60c92147d0d86ca606dda8a77260d3c87e0ef959eb2d8dbffb34df6d8a64e063
 
 opencode_home: /opt/opencode
 opencode_user_authorized_keys: []
