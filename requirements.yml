@@ -1,0 +1,9 @@
+---
+collections:
+  - name: ansible.posix
+
+roles:
+  - name: user_ssh
+    src: https://github.com/nipil/ansible-role-user-ssh.git
+    scm: git
+    version: v1.2.0
