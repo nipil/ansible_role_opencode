@@ -18,6 +18,17 @@ galaxy_info:
   galaxy_tags:
     - opencode
     - gitweb
-dependencies:
-  - src: https://github.com/nipil/ansible-role-user-ssh.git
-    version: v1.2.0
+
+# these depenencies are only used for galaxy auto-install signal
+# where transitive dependencies are found and fetched
+#
+# but ansible runds dependencies before the parent role's task
+# which is a "meta-dependency" ... which carries no vars !
+#
+# and when it does so, it is not "populated" with variables
+# so in our case, the user_ssh role would be failing validation,
+# preventing the second "real" populated run to ever happen.
+#
+# So to prevent this "empty invocation", do not list the role
+# in the meta dependency
+dependencies: []
