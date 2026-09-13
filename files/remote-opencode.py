@@ -7,12 +7,16 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 
 from pathlib import Path
 from typing import Sequence
 
 SSH_ALIVE_INTERVAL = 10
 SSH_ALIVE_COUNT_MAX = 3
+
+GIT_REPAIR_RETRIES_DURATION = 10
+GIT_REPAIR_RETRY_INTERVAL_SEC = 0.5
 
 DEFAULT_REMOTE_OPENCODE_EXEC = "opencode"
 DEFAULT_USER = "opencode"
@@ -418,17 +422,30 @@ def ensure_worktree(repo_path: Path, workdir: Path, branch: str) -> None:
             err_ctx=f"failed to add worktree {workdir} for branch {branch}",
         )
         return
-    run_checked(
-        [
-            CMD_GIT,
-            "-C",
-            str(repo_path),
-            "worktree",
-            "repair",
-            str(workdir),
-        ],
-        err_ctx=f"failed to repair worktree {workdir}",
-    )
+
+    # attempt multiple times, because the sshfs mount point is not ready, and errors happen :
+    # returncode 128: No such file or directory
+    # returncode 1 (when succeeding in fixing it !): repair: .git file broken
+    elapsed = 0
+    while elapsed < GIT_REPAIR_RETRIES_DURATION:
+        result = run_unchecked(
+            [
+                CMD_GIT,
+                "-C",
+                str(repo_path),
+                "worktree",
+                "repair",
+                str(workdir),
+            ],
+            err_ctx=f"failed to repair worktree {workdir}",
+        )
+        logging.info(f"Retrying git repair (returned {result.returncode})")
+        if result.returncode == 0:
+            break
+        time.sleep(GIT_REPAIR_RETRY_INTERVAL_SEC)
+        elapsed += GIT_REPAIR_RETRY_INTERVAL_SEC
+    else:
+        raise AppError("exausted git repair retries")
 
 
 def pristine_worktree(workdir: Path) -> None:
