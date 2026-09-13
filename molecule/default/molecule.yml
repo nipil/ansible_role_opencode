@@ -11,8 +11,8 @@ dependency:
   # produces a warning that "specified path is not in configured configured Ansible collections paths"
   # IMPORTANT: the path below seem to be hardcoded ones so that scenario actions find them automatically
   command: >-
-    ansible-galaxy collection install --collections-path molecule/default/collections --requirements-file molecule/requirements-collections.yml &&
-    ansible-galaxy role install --roles-path molecule/default/roles --role-file molecule/requirements-roles.yml
+    ansible-galaxy collection install --collections-path molecule/default/collections --requirements-file molecule/requirements.yml &&
+    ansible-galaxy role install --roles-path molecule/default/roles --role-file molecule/requirements.yml
 
 ansible:
   cfg:
