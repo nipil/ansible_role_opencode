@@ -1,4 +1,7 @@
 # collections required by molecule scenarios
 ---
 collections:
+  # for molecule
   - name: containers.podman
+  # depenency of user_ssh
+  - name: ansible.posix
