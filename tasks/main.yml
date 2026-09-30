@@ -8,6 +8,10 @@
   ansible.builtin.import_tasks:
     file: user.yml
 
+- name: Setup mise-en-place
+  ansible.builtin.include_role:
+    name: mise
+
 - name: Setup auxiliary packages
   ansible.builtin.apt:
     name: "{{ opencode_additional_packages }}"
@@ -35,28 +39,28 @@
   ansible.builtin.import_tasks:
     file: git-webui.yml
 
-- name: Check opencode version
-  changed_when: false
-  failed_when: false
-  register: opencode_version_check
-  ansible.builtin.command:
-    argv:
-      - opencode
-      - --version
-
-- name: Install opencode on target
-  when:
-    - opencode_version_check.rc != 0
-      or opencode_version not in opencode_version_check.stdout_lines
-  ansible.builtin.import_tasks:
-    file: install.yml
-
-- name: Configure opencode
-  tags: config
+- name: Setup opencode
   become: true
   become_user: "{{ opencode_user }}"
-  ansible.builtin.import_tasks:
-    file: configure.yml
+  block:
+    - name: Install opencode with mise
+      ansible.builtin.command:
+        creates: "{{ opencode_mise_shim }}"
+        argv:
+          - mise
+          - use
+          - --global
+          - "{{ opencode_mise_spec }}"
+
+    - name: Activate mise in shell rc
+      ansible.builtin.lineinfile:
+        path: "{{ opencode_home }}/{{ opencode_mise_shell_rcfile }}"
+        line: eval "$(mise activate bash)"
+        state: present
+
+    - name: Configure opencode
+      ansible.builtin.import_tasks:
+        file: configure.yml
 
 - name: Install helper on controller
   when: opencode_helper_install | bool

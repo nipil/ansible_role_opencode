@@ -1,9 +1,7 @@
 ---
 opencode_user: opencode
 
-opencode_archive: opencode-linux-x64-baseline.tar.gz
-opencode_archive_url: https://github.com/anomalyco/opencode/releases/download/v{{ opencode_version }}/{{ opencode_archive }}
-opencode_install_path: /usr/local/bin/opencode
+opencode_mise_shim: /opt/opencode/.local/share/mise/shims/opencode
 
 opencode_path_local_share: ~/.local/share/opencode
 opencode_auth_file: "{{ opencode_path_local_share }}/auth.json"

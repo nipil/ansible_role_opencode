@@ -7,13 +7,6 @@
       - opencode_user is string
     fail_msg: "opencode_user must be a string."
 
-- name: Validate opencode_archive_sha256
-  ansible.builtin.assert:
-    that:
-      - opencode_archive_sha256 is defined
-      - opencode_archive_sha256 is string
-    fail_msg: "opencode_archive_sha256 must be a string."
-
 - name: Validate opencode_home
   ansible.builtin.assert:
     that:

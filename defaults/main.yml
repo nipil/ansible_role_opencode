@@ -1,6 +1,5 @@
 ---
-opencode_version: 1.18.30
-opencode_archive_sha256: 60c92147d0d86ca606dda8a77260d3c87e0ef959eb2d8dbffb34df6d8a64e063
+opencode_mise_spec: aqua:anomalyco/opencode@latest
 
 opencode_home: /opt/opencode
 opencode_user_authorized_keys: []
@@ -10,6 +9,7 @@ opencode_helper_install: false
 opencode_helper_install_on_controller: true
 opencode_helper_install_folder: /tmp
 
+opencode_mise_shell_rcfile: .bashrc
 opencode_shell: /bin/bash
 # https://codeberg.org/dnkl/foot/issues/2335
 # for versions of foot until 1.27 foot crashes on opencode
